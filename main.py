@@ -1,9 +1,12 @@
 import base64
 import mimetypes
 
-from fastapi import FastAPI
+from fastapi import FastAPI,Request
 import logging
 from datetime import datetime
+
+from starlette.responses import JSONResponse
+
 import config
 
 from azure.core.exceptions import ResourceExistsError
@@ -32,10 +35,22 @@ class AttachmentDetail(BaseModel):
     complaint_id: str = None
     storage_app_name: str = None
 
+class UnicornException(Exception):
+    def __init__(self, name: str):
+        self.name = name
+
+
 @app.get("/")
 @app.get("/home")
 def read_main():
     return {"message": "Hello World"}
+
+@app.exception_handler(UnicornException)
+async def unicorn_exception_handler(request: Request, exc: UnicornException):
+    return JSONResponse(
+        status_code=418,
+        content={"message": f"Oops! {exc.name} did something. There goes a rainbow..."},
+    )
 
 @app.post('/attachment_storage')
 async def attachment_storage(attachmentdetail: AttachmentDetail):
